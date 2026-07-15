@@ -286,6 +286,18 @@ body {
   .hero h1 { font-size:20px; }
   .q-card .qq { font-size:17px; }
 }
+
+/* ====== AD / Support ====== */
+.ad-section { padding:0 2px; }
+.ad-banner {
+  background:linear-gradient(135deg,#FFF7ED,#FEF3C7); border-radius:14px;
+  padding:12px 16px; cursor:pointer; display:flex; align-items:center; gap:10px;
+  border:1px dashed #FCD34D; transition:var(--tr); font-size:13px; font-weight:600;
+}
+.ad-banner:hover { background:linear-gradient(135deg,#FEF3C7,#FDE68A); }
+.ad-tag { background:#F59E0B; color:#fff; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:800; }
+.support-qr { width:200px; height:200px; margin:16px auto; display:block; background:var(--bg2); border-radius:16px; }
+.support-info { text-align:center; font-size:13px; color:var(--t2); line-height:1.8; }
 </style>
 </head>
 <body>
@@ -326,6 +338,20 @@ body {
     </div>
     <div id="deckList"></div>
     <div class="empty" id="emptyDecks"><div class="ei">📝</div><div class="et">还没有卡片组</div><button class="btn btn-p btn-sm" onclick="showDeckSheet()">✨ 创建第一个</button></div>
+    <!-- 广告/支持区域 -->
+    <div class="ad-section mt16" id="adSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:11px;color:var(--t3);">💼 赞助商</span>
+        <button class="btn btn-o btn-sm" onclick="showM('mSupport')" style="font-size:10px;padding:4px 10px;">发布广告</button>
+      </div>
+      <div class="ad-banner" id="adBanner" onclick="openAdLink()">
+        <span class="ad-tag">广告</span>
+        <span id="adText">🧠 高效记忆法课程 · 限时免费领取 →</span>
+      </div>
+      <div style="text-align:center;margin-top:6px;">
+        <button class="btn btn-o btn-sm" onclick="showM('mSupport')" style="font-size:11px;">☕ 支持开发者</button>
+      </div>
+    </div>
   </div>
 
   <!-- ====== v-discover: Discover ====== -->
@@ -486,6 +512,37 @@ body {
 
 <!-- ====== Preview Modal ====== -->
 <div class="modal ctr" id="mPreview"><div class="sheet" style="max-height:70vh;overflow-y:auto;" id="previewContent"></div></div>
+
+<!-- ====== Support Modal ====== -->
+<div class="modal ctr" id="mSupport"><div class="sheet" style="text-align:center;">
+  <h3>💰 支持 & 合作</h3>
+  <p class="support-info">如果你觉得这个工具对你有帮助<br/>欢迎请开发者喝杯咖啡 ☕</p>
+  <!-- 在此处放入你的微信/支付宝收款码图片 -->
+  <div class="support-qr" id="qrPlaceholder" onclick="uploadQR()">
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--t3);font-size:13px;flex-direction:column;gap:6px;">
+      <span style="font-size:40px;">📷</span>
+      <span>点击上传收款码</span>
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--t3);">微信/支付宝收款码图片</p>
+  <hr style="border:none;border-top:1px solid var(--b);margin:16px 0;">
+  <h4 style="margin-bottom:8px;">📢 广告位招租</h4>
+  <p class="support-info" style="font-size:12px;">在"我的卡片"页面底部展示你的推广内容<br/>适合教育类产品、课程推广<br/>联系方式：<b>1973097131@qq.com</b></p>
+  <hr style="border:none;border-top:1px solid var(--b);margin:16px 0;">
+  <h4 style="margin-bottom:8px;">🔗 联盟推广</h4>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button class="btn btn-o btn-sm btn-blk" onclick="setAd('course')">🧠 课程推广</button>
+    <button class="btn btn-o btn-sm btn-blk" onclick="setAd('book')">📚 图书推荐</button>
+    <button class="btn btn-o btn-sm btn-blk" onclick="setAd('app')">📱 APP推广</button>
+  </div>
+  <div style="text-align:center;margin-top:12px;">
+    <a href="https://www.taobao.com" target="_blank" style="font-size:12px;color:var(--p);text-decoration:none;">🛒 淘宝客联盟 · 推广赚佣金 →</a>
+  </div>
+  <div class="btn-row mt16"><button class="btn btn-p btn-blk" onclick="hideM('mSupport')">关闭</button></div>
+</div></div>
+
+<!-- Hidden file inputs for QR upload -->
+<input type="file" id="qrInput" accept="image/*" style="display:none;" onchange="handleQRUpload(event)">
 
 <!-- Hidden file input -->
 <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="handleFileImport(event)">
@@ -909,6 +966,36 @@ document.querySelector('.nav').addEventListener('click',e=>{
 
 // ==================== BACK ====================
 $('btnBack').addEventListener('click',goBack);
+
+// ==================== AD / MONETIZATION ====================
+const adConfigs={
+  course:{text:'🧠 高效记忆法课程 · 限时免费领取 →',link:'https://www.taobao.com'},
+  book:{text:'📚 《记忆的艺术》· 豆瓣高分推荐 →',link:'https://www.taobao.com'},
+  app:{text:'📱 学霸都在用的记忆APP · 免费下载 →',link:'https://www.taobao.com'}
+};
+function setAd(type){
+  const cfg=adConfigs[type];
+  $('#adText').textContent=cfg.text; $('#adBanner').dataset.link=cfg.link;
+  localStorage.setItem('fc_ad_type',type); hideM('mSupport'); t('✅ 广告类型已更新');
+}
+function openAdLink(){
+  const link=$('#adBanner').dataset.link||adConfigs.course.link;
+  window.open(link,'_blank');
+}
+function uploadQR(){$('#qrInput').click();}
+function handleQRUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{$('#qrPlaceholder').innerHTML=`<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:contain;">`;localStorage.setItem('fc_qr',ev.target.result);};
+  reader.readAsDataURL(file);
+}
+// Restore saved settings
+(function(){
+  const savedAd=localStorage.getItem('fc_ad_type');
+  if(savedAd&&adConfigs[savedAd]){$('#adText').textContent=adConfigs[savedAd].text;$('#adBanner').dataset.link=adConfigs[savedAd].link;}
+  const savedQR=localStorage.getItem('fc_qr');
+  if(savedQR){$('#qrPlaceholder').innerHTML=`<img src="${savedQR}" style="width:100%;height:100%;object-fit:contain;">`;}
+})();
 
 // ==================== INIT ====================
 render('v-decks');
